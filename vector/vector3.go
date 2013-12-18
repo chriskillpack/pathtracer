@@ -1,4 +1,4 @@
-package main
+package vector
 
 import (
   "math"
@@ -29,4 +29,13 @@ func Add(a, b Vector3) Vector3 {
 
 func Sub(a, b Vector3) Vector3 {
   return Vector3{a.X-b.X, a.Y-b.Y, a.Z-b.Z}
+}
+
+func Normalize(x Vector3) Vector3 {
+  length := x.Len()
+  if length > 1e-2 {
+    recip_length := 1 / length
+    return Vector3{x.X * recip_length, x.Y * recip_length, x.Z * recip_length}
+  }
+  return x
 }

@@ -2,23 +2,23 @@ package main
 
 import (
   "math"
+  "pathtracer/vector"
 )
 
 type Sphere struct {
-  center Vector3
+  center vector.Vector3
   radius float32
 }
 
-func (sphere Sphere) Intersect(ray_origin, ray_direction Vector3) float32 {
+func (sphere Sphere) Intersect(ray_origin, ray_direction vector.Vector3) float32 {
   /**
    * From: http://www.cs.umbc.edu/~olano/435f02/ray-sphere.html
    */
-  dst := Sub(ray_origin, sphere.center)
+  dst := vector.Sub(ray_origin, sphere.center)
 
-  a := Dot(ray_direction, ray_direction)
-  b := 2 * Dot(ray_direction, dst)
-  c := Dot(dst, dst) - (sphere.radius * sphere.radius)
-
+  a := vector.Dot(ray_direction, ray_direction)
+  b := 2 * vector.Dot(ray_direction, dst)
+  c := vector.Dot(dst, dst) - (sphere.radius * sphere.radius)
   discrim_sq := float64(b * b - 4 * a * c)
   if (discrim_sq < 0) {
     return math.MaxFloat32
