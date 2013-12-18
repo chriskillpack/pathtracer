@@ -10,7 +10,7 @@ type Sphere struct {
   radius float32
 }
 
-func (sphere Sphere) Intersect(ray_origin, ray_direction vector.Vector3) float32 {
+func (sphere Sphere) Intersect(ray_origin, ray_direction vector.Vector3) (does_intersect bool, distance float32) {
   /**
    * From: http://www.cs.umbc.edu/~olano/435f02/ray-sphere.html
    */
@@ -21,7 +21,7 @@ func (sphere Sphere) Intersect(ray_origin, ray_direction vector.Vector3) float32
   c := vector.Dot(dst, dst) - (sphere.radius * sphere.radius)
   discrim_sq := float64(b * b - 4 * a * c)
   if (discrim_sq < 0) {
-    return math.MaxFloat32
+    return false, 0
   }
 
   discrim := float32(math.Sqrt(discrim_sq))
@@ -31,5 +31,5 @@ func (sphere Sphere) Intersect(ray_origin, ray_direction vector.Vector3) float32
   } else {
     t = -b / (2 * a)
   }
-  return t
+  return true, t
 }

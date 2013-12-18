@@ -3,7 +3,6 @@ package main
 import (
   "image"
   "image/png"
-  "math"
   "os"
   "pathtracer/vector"
 )
@@ -21,17 +20,16 @@ func main() {
   img,_ := os.Create("foo.png")
   defer img.Close()
 
-  sphere := Sphere{vector.Vector3{0,0,0}, 2}
+  sphere := Object(Sphere{vector.Vector3{0,0,0}, 2})
   for x := 0; x < 256; x++ {
     for y := 0; y < 256; y++ {
       // Generate a ray
       dx := (float32(x - 128) / 128) * 5
       dy := (float32(y - 128) / 128) * 5
       ray_direction := vector.Normalize(vector.Vector3{dx, dy, 10})
-      t := sphere.Intersect(vector.Vector3{0,0,-10}, ray_direction)
-      hit := t < math.MaxFloat32
+      does_intersect, _ := sphere.Intersect(vector.Vector3{0,0,-10}, ray_direction)
       col := 0
-      if hit {
+      if does_intersect {
         col = 255
       }
 

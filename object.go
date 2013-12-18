@@ -6,8 +6,9 @@ import (
 
 type Object interface {
   /*
-    Tests the ray against the object. Returns the distance along the ray to the
-    closest point of intersection or MaxFloat32 in case of no intersection.
+    Tests if a ray intersects with the object. Returns a tuple (does_intersect,
+    distance) where distance is the distance along the ray to the closest point
+    of intersection.
   */
-  Intersect(ray_origin, ray_direction vector.Vector3) float32
+  Intersect(ray_origin, ray_direction vector.Vector3) (does_intersect bool, distance float32)
 }
