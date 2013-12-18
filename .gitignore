@@ -19,4 +19,8 @@ _cgo_export.*
 
 _testmain.go
 
-*.exe
+# Output binary
+pathtracer
+
+# Output images
+*.png
