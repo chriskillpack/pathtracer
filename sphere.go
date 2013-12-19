@@ -10,14 +10,14 @@ type Sphere struct {
   radius float32
 }
 
-func (sphere Sphere) Intersect(ray_origin, ray_direction vector.Vector3) (does_intersect bool, distance float32) {
+func (sphere Sphere) Intersect(rayOrigin, rayDirection vector.Vector3) (doesIntersect bool, distance float32) {
   /**
    * From: http://www.cs.umbc.edu/~olano/435f02/ray-sphere.html
    */
-  dst := vector.Sub(ray_origin, sphere.center)
+  dst := vector.Sub(rayOrigin, sphere.center)
 
-  a := vector.Dot(ray_direction, ray_direction)
-  b := 2 * vector.Dot(ray_direction, dst)
+  a := vector.Dot(rayDirection, rayDirection)
+  b := 2 * vector.Dot(rayDirection, dst)
   c := vector.Dot(dst, dst) - (sphere.radius * sphere.radius)
   discrim_sq := float64(b * b - 4 * a * c)
   if (discrim_sq < 0) {

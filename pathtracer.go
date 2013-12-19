@@ -26,10 +26,10 @@ func main() {
       // Generate a ray
       dx := (float32(x - 128) / 128) * 5
       dy := (float32(y - 128) / 128) * 5
-      ray_direction := vector.Normalize(vector.Vector3{dx, dy, 10})
-      does_intersect, _ := sphere.Intersect(vector.Vector3{0,0,-10}, ray_direction)
+      rayDirection := vector.Normalize(vector.Vector3{dx, dy, 10})
+      doesIntersect, _ := sphere.Intersect(vector.Vector3{0,0,-10}, rayDirection)
       col := 0
-      if does_intersect {
+      if doesIntersect {
         col = 255
       }
 

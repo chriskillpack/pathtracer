@@ -10,5 +10,5 @@ type Object interface {
     distance) where distance is the distance along the ray to the closest point
     of intersection.
   */
-  Intersect(ray_origin, ray_direction vector.Vector3) (does_intersect bool, distance float32)
+  Intersect(rayOrigin, rayDirection vector.Vector3) (doesIntersect bool, distance float32)
 }
