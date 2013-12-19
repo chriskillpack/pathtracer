@@ -1,8 +1,11 @@
 package main
 
 import (
+  "math"
   "pathtracer/vector"
 )
+
+var DefaultIntersection = Intersection{distance: math.MaxFloat32}
 
 // Intersection holds information about the intersection between a ray and a
 // scene object.

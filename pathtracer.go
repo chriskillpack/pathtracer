@@ -23,18 +23,32 @@ func main() {
   img,_ := os.Create("foo.png")
   defer img.Close()
 
-  sphere := SceneObject(Sphere{vector.Vector3{0,0,0}, 2})
+  sceneObjects := []SceneObject{
+    Sphere{vector.Vector3{0,0,0}, 2},
+    Plane{vector.Vector3{0,1,0}, -3},
+  }
+  // sceneObjects = append(sceneObjects, foo)
 
   for x := 0; x < 256; x++ {
     for y := 0; y < 256; y++ {
       // Generate a ray
       dx := (float32(x - 128) / 128) * 5
-      dy := (float32(y - 128) / 128) * 5
+      dy := (float32(128 - y) / 128) * 5
       rayDirection := vector.Normalize(vector.Vector3{dx, dy, 10})
-      intersection := sphere.Intersect(vector.Vector3{0,0,-10}, rayDirection)
+
+      var closestIntersection Intersection = DefaultIntersection
+      for _, object := range sceneObjects {
+        intersection := object.Intersect(vector.Vector3{0,0,-10}, rayDirection)
+        if intersection.doesIntersect {
+          if intersection.distance < closestIntersection.distance {
+            closestIntersection = intersection
+          }
+        }
+      }
+
       var r, g, b uint8
-      if intersection.doesIntersect {
-        r, g, b = normalToColor(intersection.normal)
+      if closestIntersection.doesIntersect {
+        r, g, b = normalToColor(closestIntersection.normal)
       }
 
       index := y * m.Stride + x * 4
