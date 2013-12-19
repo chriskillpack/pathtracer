@@ -4,11 +4,23 @@ import (
   "pathtracer/vector"
 )
 
-type Object interface {
-  /*
-    Tests if a ray intersects with the object. Returns a tuple (does_intersect,
-    distance) where distance is the distance along the ray to the closest point
-    of intersection.
-  */
-  Intersect(rayOrigin, rayDirection vector.Vector3) (doesIntersect bool, distance float32)
+// Intersection holds information about the intersection between a ray and a
+// scene object.
+type Intersection struct {
+  // Did the ray intersect the object?
+  doesIntersect bool
+  // Distance along the ray to the closest point of intersection. May be
+  // negative indicating that the intersection is behind the ray origin.
+  distance      float32
+  // Normalized surface normal of the object at the point of intersection.
+  normal        vector.Vector3
+}
+
+// SceneObject specifies the common interface that all scene objects must
+// implement.
+type SceneObject interface {
+  // Returns an Intersection object that describes the intersection between a
+  // ray and the object. If no intersection exists then doesIntersect will be
+  // false and all other field values should be ignored.
+  Intersect(rayOrigin, rayDirection vector.Vector3) Intersection
 }

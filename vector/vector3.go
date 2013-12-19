@@ -13,6 +13,10 @@ func (v Vector3) Len() float32 {
   return float32(len)
 }
 
+func (v Vector3) Scale(factor float32) Vector3 {
+  return Vector3{v.X * factor, v.Y * factor, v.Z * factor}
+}
+
 func Dot(a, b Vector3) float32 {
   return a.X*b.X + a.Y*b.Y + a.Z*b.Z
 }

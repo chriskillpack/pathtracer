@@ -10,10 +10,9 @@ type Sphere struct {
   radius float32
 }
 
-func (sphere Sphere) Intersect(rayOrigin, rayDirection vector.Vector3) (doesIntersect bool, distance float32) {
-  /**
-   * From: http://www.cs.umbc.edu/~olano/435f02/ray-sphere.html
-   */
+// Compute the intersection between a sphere and a ray.
+// From: http://www.cs.umbc.edu/~olano/435f02/ray-sphere.html
+func (sphere Sphere) Intersect(rayOrigin, rayDirection vector.Vector3) Intersection {
   dst := vector.Sub(rayOrigin, sphere.center)
 
   a := vector.Dot(rayDirection, rayDirection)
@@ -21,7 +20,7 @@ func (sphere Sphere) Intersect(rayOrigin, rayDirection vector.Vector3) (doesInte
   c := vector.Dot(dst, dst) - (sphere.radius * sphere.radius)
   discrim_sq := float64(b * b - 4 * a * c)
   if (discrim_sq < 0) {
-    return false, 0
+    return Intersection{false, 0, vector.Vector3{}}
   }
 
   discrim := float32(math.Sqrt(discrim_sq))
@@ -31,5 +30,14 @@ func (sphere Sphere) Intersect(rayOrigin, rayDirection vector.Vector3) (doesInte
   } else {
     t = -b / (2 * a)
   }
-  return true, t
+
+  normal := sphere.computeNormal(rayOrigin, rayDirection, t)
+  return Intersection{true, t, normal}
+}
+
+// Compute the normal at the point of intersection.
+func (sphere Sphere) computeNormal(rayOrigin, rayDirection vector.Vector3, t float32) vector.Vector3 {
+  pointOnSphere := vector.Add(rayOrigin, rayDirection.Scale(t))
+  v := vector.Sub(pointOnSphere, sphere.center)
+  return vector.Normalize(v)
 }
