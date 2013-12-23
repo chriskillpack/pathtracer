@@ -25,5 +25,5 @@ type SceneObject interface {
   // Returns an Intersection object that describes the intersection between a
   // ray and the object. If no intersection exists then doesIntersect will be
   // false and all other field values should be ignored.
-  Intersect(rayOrigin, rayDirection vector.Vector3) Intersection
+  Intersect(ray Ray) Intersection
 }

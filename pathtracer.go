@@ -10,15 +10,12 @@ import (
 
 var _ = fmt.Println
 
-func main() {
-  /* TODO: Move these into a test file */
-  /* v := Vector3{1,2,3} */
-  /* fmt.Println(v.Len()) */
-  /* v2 := Vector3{0, 1, 0} */
-  /* fmt.Println(Dot(v, v2)) */
-  /* v3 := Vector3{1, 0, 0} */
-  /* fmt.Println(Cross(v2, v3)) */
+const (
+  ImageWidth int = 256
+  ImageHeight = 256
+)
 
+func main() {
   m := image.NewRGBA(image.Rect(0, 0, 256, 256))
   img,_ := os.Create("foo.png")
   defer img.Close()
@@ -29,16 +26,17 @@ func main() {
   }
   // sceneObjects = append(sceneObjects, foo)
 
-  for x := 0; x < 256; x++ {
-    for y := 0; y < 256; y++ {
+  for i := 0; i < ImageHeight; i++ {
+    for j := 0; j < ImageWidth; j++ {
       // Generate a ray
-      dx := (float32(x - 128) / 128) * 5
-      dy := (float32(128 - y) / 128) * 5
-      rayDirection := vector.Normalize(vector.Vector3{dx, dy, 10})
+      npx := float32(j - ImageWidth/2) / float32(ImageWidth/2)
+      npy := float32(ImageHeight/2 - i) / float32(ImageHeight/2)
+      rayDirection := vector.Normalize(vector.Vector3{npx * 5, npy * 5, 10})
 
+      ray := Ray{vector.Vector3{0,0,-10}, rayDirection}
       var closestIntersection Intersection = DefaultIntersection
       for _, object := range sceneObjects {
-        intersection := object.Intersect(vector.Vector3{0,0,-10}, rayDirection)
+        intersection := object.Intersect(ray)
         if intersection.doesIntersect {
           if intersection.distance < closestIntersection.distance {
             closestIntersection = intersection
@@ -51,7 +49,7 @@ func main() {
         r, g, b = normalToColor(closestIntersection.normal)
       }
 
-      index := y * m.Stride + x * 4
+      index := i * m.Stride + j * 4
       m.Pix[index+0] = r
       m.Pix[index+1] = g
       m.Pix[index+2] = b

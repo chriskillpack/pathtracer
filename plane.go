@@ -12,13 +12,13 @@ type Plane struct {
   offset float32
 }
 
-func (plane Plane) Intersect(rayOrigin, rayDirection vector.Vector3) Intersection {
-  Vd := vector.Dot(plane.normal, rayDirection)
+func (plane Plane) Intersect(ray Ray) Intersection {
+  Vd := vector.Dot(plane.normal, ray.direction)
   if math.Abs(float64(Vd)) < 1e-2 {
     // Ray is parallel to plane, no intersection.
     return Intersection{}
   }
-  V0 := -(vector.Dot(plane.normal, rayOrigin) - plane.offset)
+  V0 := -(vector.Dot(plane.normal, ray.origin) - plane.offset)
   t := V0 / Vd
   if t < 0 {
     // Intersection is behind the ray origin, ignore.
