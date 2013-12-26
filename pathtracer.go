@@ -21,8 +21,12 @@ func main() {
   defer img.Close()
 
   sceneObjects := []SceneObject{
-    Sphere{vector.Vector3{0,0,0}, 2},
-    Plane{vector.Vector3{0,1,0}, -3},
+    Sphere{vector.Vector3{2,10,2}, 2.5},
+    Plane{vector.Vector3{-1,0,0}, 10}, // Left
+    Plane{vector.Vector3{0,0,1}, 20},  // Back
+    Plane{vector.Vector3{1,0,0}, 10}, // Right
+    Plane{vector.Vector3{0,1,0}, 0},  // Bottom
+    Plane{vector.Vector3{0,-1,0}, -30},  // Top
   }
   // sceneObjects = append(sceneObjects, foo)
 
@@ -31,9 +35,9 @@ func main() {
       // Generate a ray
       npx := float32(j - ImageWidth/2) / float32(ImageWidth/2)
       npy := float32(ImageHeight/2 - i) / float32(ImageHeight/2)
-      rayDirection := vector.Normalize(vector.Vector3{npx * 5, npy * 5, 10})
+      rayDirection := vector.Normalize(vector.Vector3{npx, npy, 1})
 
-      ray := Ray{vector.Vector3{0,0,-10}, rayDirection}
+      ray := Ray{vector.Vector3{0,15,-10}, rayDirection}
       var closestIntersection Intersection = DefaultIntersection
       for _, object := range sceneObjects {
         intersection := object.Intersect(ray)
