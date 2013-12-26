@@ -4,6 +4,8 @@ import (
   "fmt"
   "image"
   "image/png"
+  "math"
+  "math/rand"
   "os"
   "pathtracer/vector"
 )
@@ -24,7 +26,7 @@ var (
 )
 
 func main() {
-  m := image.NewRGBA(image.Rect(0, 0, 256, 256))
+  m := image.NewRGBA(image.Rect(0, 0, ImageWidth, ImageHeight))
   img,_ := os.Create("foo.png")
   defer img.Close()
 
@@ -42,8 +44,7 @@ func main() {
   // these basis vectors to generate target points for ray generation. The
   // whole process is a little long-winded but working up from first principles.
   lookVector := vector.Sub(EyeLookAtTarget, EyePosition).Normalize()
-  xAxis := vector.Cross(WorldUp, lookVector)
-  yAxis := vector.Cross(lookVector, xAxis)
+  xAxis, yAxis, _ := coordinateFrame(lookVector)
 
   for i := 0; i < ImageHeight; i++ {
     for j := 0; j < ImageWidth; j++ {
@@ -112,4 +113,41 @@ func colorToUint8(x float32) uint8 {
   } else {
     return uint8(x)
   }
+}
+
+// Generate a random direction on a hemisphere oriented around the input normal.
+// The random directions have a cosine-weighted distribution.
+// See formula 35 in http://people.cs.kuleuven.be/~philip.dutre/GI/TotalCompendium.pdf
+func generateHemisphereDirection(normal vector.Vector3) vector.Vector3 {
+  r1 := 2 * math.Pi * rand.Float64()
+  r2 := rand.Float64()
+  r2s := math.Sqrt(1-r2)
+
+  // Compute a direction in the unit hemisphere
+  x := float32(math.Cos(r1) * r2s)
+  y := float32(math.Sin(r1) * r2s)
+  z := float32(math.Sqrt(r2))
+
+  // Compute a coordinate frame around the normal and then linearly combine
+  // the basis vectors using the direction components as weights to transform
+  // from unit hemisphere coordinate system to the normal's coordinate system.
+  u, v, w := coordinateFrame(normal)
+  t := vector.Add(vector.Scale(u, x), vector.Scale(v, y))
+  return vector.Add(t, vector.Scale(w, z))
+}
+
+// Given an input vector n this function generates a coordinate frame with the
+// input vector as the Z axis.
+func coordinateFrame(n vector.Vector3) (u, v, w vector.Vector3) {
+  if (math.Abs(float64(vector.Dot(n, WorldUp))) > 0.9) {
+    // Input too close to world up, use another world up.
+    u = vector.Cross(vector.Vector3{0,0,-1}, n)
+  } else {
+    u = vector.Cross(WorldUp, n).Normalize()
+  }
+
+  v = vector.Cross(n, u).Normalize()
+  w = vector.Normalize(n)
+
+  return
 }
