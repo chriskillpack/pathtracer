@@ -15,6 +15,14 @@ const (
   ImageHeight = 256
 )
 
+var (
+  WorldUp = vector.Vector3{0,1,0}
+
+  EyePosition = vector.Vector3{0,15,-10}
+  EyeLookAtTarget = vector.Vector3{0,15,0}
+  EyePlaneDist = float32(1.0)
+)
+
 func main() {
   m := image.NewRGBA(image.Rect(0, 0, 256, 256))
   img,_ := os.Create("foo.png")
@@ -30,14 +38,36 @@ func main() {
   }
   // sceneObjects = append(sceneObjects, foo)
 
+  // Compute the eye-space to world-space transformation basis vectors. We use
+  // these basis vectors to generate target points for ray generation. The
+  // whole process is a little long-winded but working up from first principles.
+  lookVector := vector.Sub(EyeLookAtTarget, EyePosition).Normalize()
+  xAxis := vector.Cross(WorldUp, lookVector)
+  yAxis := vector.Cross(lookVector, xAxis)
+
   for i := 0; i < ImageHeight; i++ {
     for j := 0; j < ImageWidth; j++ {
-      // Generate a ray
+      // Compute the 2D position of this pixel on the view plane. The view plane
+      // is centered around the view vector and extends [-1,1] in both axis.
       npx := float32(j - ImageWidth/2) / float32(ImageWidth/2)
       npy := float32(ImageHeight/2 - i) / float32(ImageHeight/2)
-      rayDirection := vector.Normalize(vector.Vector3{npx, npy, 1})
 
-      ray := Ray{vector.Vector3{0,15,-10}, rayDirection}
+      // Scale the world-space basis vectors of the view plane to generate
+      // offset vectors from the center point of the view plane.
+      xAxisOffset := vector.Scale(xAxis, npx)
+      yAxisOffset := vector.Scale(yAxis, npy)
+      // Move down the view vector from the eye to generate the center point
+      // on the view plane in world-space.
+      midPoint := vector.Add(EyePosition, vector.Scale(lookVector, EyePlaneDist))
+
+      // Add the offset vectors on to the center point to generate the ray
+      // target in world-space.
+      target := vector.Add(vector.Add(midPoint, xAxisOffset), yAxisOffset)
+
+      // Finally compute a ray direction from the eye to the target.
+      rayDirection := vector.Sub(target, EyePosition).Normalize()
+
+      ray := Ray{EyePosition, rayDirection}
       var closestIntersection Intersection = DefaultIntersection
       for _, object := range sceneObjects {
         intersection := object.Intersect(ray)
