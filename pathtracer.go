@@ -30,13 +30,17 @@ func main() {
   img,_ := os.Create("foo.png")
   defer img.Close()
 
+  whiteDiffuse := DiffuseMaterial{vector.Vector3{1,1,1}}
+  redDiffuse := DiffuseMaterial{vector.Vector3{1,0,0}}
+  blueDiffuse := DiffuseMaterial{vector.Vector3{0,0,1}}
+
   sceneObjects := []SceneObject{
-    Sphere{vector.Vector3{2,10,2}, 2.5},
-    Plane{vector.Vector3{-1,0,0}, 10}, // Left
-    Plane{vector.Vector3{0,0,1}, 20},  // Back
-    Plane{vector.Vector3{1,0,0}, 10}, // Right
-    Plane{vector.Vector3{0,1,0}, 0},  // Bottom
-    Plane{vector.Vector3{0,-1,0}, -30},  // Top
+    Sphere{vector.Vector3{2,10,2}, 2.5, whiteDiffuse},
+    Plane{vector.Vector3{-1,0,0}, 10, redDiffuse}, // Left
+    Plane{vector.Vector3{0,0,1}, 20, whiteDiffuse},  // Back
+    Plane{vector.Vector3{1,0,0}, 10, blueDiffuse}, // Right
+    Plane{vector.Vector3{0,-1,0}, 0, whiteDiffuse},  // Bottom
+    Plane{vector.Vector3{0,1,0}, 30, whiteDiffuse},  // Top
   }
   // sceneObjects = append(sceneObjects, foo)
 
@@ -70,18 +74,21 @@ func main() {
 
       ray := Ray{EyePosition, rayDirection}
       var closestIntersection Intersection = DefaultIntersection
+      var closestObject SceneObject = nil
       for _, object := range sceneObjects {
         intersection := object.Intersect(ray)
         if intersection.doesIntersect {
           if intersection.distance < closestIntersection.distance {
             closestIntersection = intersection
+            closestObject = object
           }
         }
       }
 
       var r, g, b uint8
       if closestIntersection.doesIntersect {
-        r, g, b = normalToColor(closestIntersection.normal)
+        color := closestObject.Material().Shade(ray, closestIntersection)
+        r, g, b = colorToColor8(color)
       }
 
       index := i * m.Stride + j * 4
@@ -94,9 +101,16 @@ func main() {
   png.Encode(img, m)
 }
 
+func colorToColor8(color vector.Vector3) (r, g, b uint8) {
+  r = colorToUint8(color.X * 255)
+  g = colorToUint8(color.Y * 255)
+  b = colorToUint8(color.Z * 255)
+  return
+}
+
 // Convert a normal into a color. Normal components are in the range [-1,1] and
 // are converted to colors in the range [0,254].
-func normalToColor(normal vector.Vector3) (r, g, b uint8) {
+func normalToColor8(normal vector.Vector3) (r, g, b uint8) {
   r = colorToUint8((normal.X + 1) * 127)
   g = colorToUint8((normal.Y + 1) * 127)
   b = colorToUint8((normal.Z + 1) * 127)

@@ -10,6 +10,8 @@ type Plane struct {
   normal vector.Vector3
   // The distance of the plane from the origin along it's normal.
   offset float32
+
+  material Material
 }
 
 func (plane Plane) Intersect(ray Ray) Intersection {
@@ -26,4 +28,8 @@ func (plane Plane) Intersect(ray Ray) Intersection {
   }
 
   return Intersection{true, t, plane.normal}
+}
+
+func (plane Plane) Material() Material {
+  return plane.material
 }

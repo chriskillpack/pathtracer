@@ -26,4 +26,7 @@ type SceneObject interface {
   // ray and the object. If no intersection exists then doesIntersect will be
   // false and all other field values should be ignored.
   Intersect(ray Ray) Intersection
+
+  // Return the object material.
+  Material() Material
 }

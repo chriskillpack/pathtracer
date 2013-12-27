@@ -8,6 +8,8 @@ import (
 type Sphere struct {
   center vector.Vector3
   radius float32
+
+  material Material
 }
 
 // Compute the intersection between a sphere and a ray.
@@ -35,9 +37,13 @@ func (sphere Sphere) Intersect(ray Ray) Intersection {
   return Intersection{true, t, normal}
 }
 
+func (sphere Sphere) Material() Material {
+  return sphere.material
+}
+
 // Compute the normal at the point of intersection.
 func (sphere Sphere) computeNormal(ray Ray, t float32) vector.Vector3 {
-  pointOnSphere := vector.Add(ray.origin, ray.direction.Scale(t))
+  pointOnSphere := vector.Add(ray.origin, vector.Scale(ray.direction, t))
   v := vector.Sub(pointOnSphere, sphere.center)
   return vector.Normalize(v)
 }

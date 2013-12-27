@@ -13,10 +13,6 @@ func (v Vector3) Len() float32 {
   return float32(len)
 }
 
-func (v Vector3) Scale(factor float32) Vector3 {
-  return Vector3{v.X * factor, v.Y * factor, v.Z * factor}
-}
-
 func (v Vector3) Normalize() Vector3 {
   return Normalize(v)
 }
