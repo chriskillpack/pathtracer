@@ -5,7 +5,6 @@ import (
   "image"
   "image/png"
   "math"
-  "math/rand"
   "os"
   "pathtracer/vector"
 )
@@ -23,26 +22,34 @@ var (
   EyePosition = vector.Vector3{0,15,-10}
   EyeLookAtTarget = vector.Vector3{0,15,0}
   EyePlaneDist = float32(1.0)
+
+  Scene []SceneObject
 )
+
+// Populate the scene with objects.
+func populateScene(scene []SceneObject) []SceneObject {
+  whiteDiffuse := DiffuseMaterial{vector.Vector3{1,1,1}, vector.Vector3{}}
+  redDiffuse := DiffuseMaterial{vector.Vector3{1,0,0}, vector.Vector3{}}
+  blueDiffuse := DiffuseMaterial{vector.Vector3{0,0,1}, vector.Vector3{}}
+  whiteEmissive := DiffuseMaterial{vector.Vector3{1,1,1}, vector.Vector3{10,10,10}}
+
+  scene = append(scene,
+    Sphere{vector.Vector3{2,10,2}, 2.5, whiteDiffuse},
+    Plane{vector.Vector3{-1,0,0}, 10, redDiffuse}, // Left
+    Plane{vector.Vector3{0,0,1}, 20, whiteDiffuse},  // Back
+    Plane{vector.Vector3{1,0,0}, 10, blueDiffuse}, // Right
+    Plane{vector.Vector3{0,1,0}, 0, whiteDiffuse},  // Bottom
+    Plane{vector.Vector3{0,1,0}, 30, whiteEmissive})  // Top
+
+  return scene
+}
 
 func main() {
   m := image.NewRGBA(image.Rect(0, 0, ImageWidth, ImageHeight))
   img,_ := os.Create("foo.png")
   defer img.Close()
 
-  whiteDiffuse := DiffuseMaterial{vector.Vector3{1,1,1}}
-  redDiffuse := DiffuseMaterial{vector.Vector3{1,0,0}}
-  blueDiffuse := DiffuseMaterial{vector.Vector3{0,0,1}}
-
-  sceneObjects := []SceneObject{
-    Sphere{vector.Vector3{2,10,2}, 2.5, whiteDiffuse},
-    Plane{vector.Vector3{-1,0,0}, 10, redDiffuse}, // Left
-    Plane{vector.Vector3{0,0,1}, 20, whiteDiffuse},  // Back
-    Plane{vector.Vector3{1,0,0}, 10, blueDiffuse}, // Right
-    Plane{vector.Vector3{0,-1,0}, 0, whiteDiffuse},  // Bottom
-    Plane{vector.Vector3{0,1,0}, 30, whiteDiffuse},  // Top
-  }
-  // sceneObjects = append(sceneObjects, foo)
+  Scene = populateScene(Scene)
 
   // Compute the eye-space to world-space transformation basis vectors. We use
   // these basis vectors to generate target points for ray generation. The
@@ -72,24 +79,14 @@ func main() {
       // Finally compute a ray direction from the eye to the target.
       rayDirection := vector.Sub(target, EyePosition).Normalize()
 
+      // Sample the scene using the ray.
       ray := Ray{EyePosition, rayDirection}
-      var closestIntersection Intersection = DefaultIntersection
-      var closestObject SceneObject = nil
-      for _, object := range sceneObjects {
-        intersection := object.Intersect(ray)
-        if intersection.doesIntersect {
-          if intersection.distance < closestIntersection.distance {
-            closestIntersection = intersection
-            closestObject = object
-          }
-        }
+      var pixelColor vector.Vector3
+      for s := 0 ; s < 20 ; s++ {
+        pixelColor = vector.Add(pixelColor, sampleScene(ray, 10))
       }
 
-      var r, g, b uint8
-      if closestIntersection.doesIntersect {
-        color := closestObject.Material().Shade(ray, closestIntersection)
-        r, g, b = colorToColor8(color)
-      }
+      r, g, b := colorToColor8(pixelColor)
 
       index := i * m.Stride + j * 4
       m.Pix[index+0] = r
@@ -99,6 +96,45 @@ func main() {
     }
   }
   png.Encode(img, m)
+}
+
+// Samples the scene with the ray and returns the color along that path.
+func sampleScene(ray Ray, numLevels int32) vector.Vector3 {
+  if numLevels == 0 {
+    return vector.Vector3{} // No more recursing, return black
+  }
+
+  var closestIntersection Intersection = DefaultIntersection
+  var closestObject SceneObject = nil
+  for _, object := range Scene {
+    intersection := object.Intersect(ray)
+    if intersection.doesIntersect {
+      if intersection.distance < closestIntersection.distance {
+        closestIntersection = intersection
+        closestObject = object
+      }
+    }
+  }
+
+  var color vector.Vector3
+  if closestIntersection.doesIntersect {
+    var diffuseMaterial DiffuseMaterial
+    diffuseMaterial = closestObject.Material().(DiffuseMaterial)
+
+    // Compute new sampling direction
+    newRayOrigin := vector.Add(ray.origin, vector.Scale(ray.direction, closestIntersection.distance))
+    newRayDirection := GenerateHemisphereDirection(closestIntersection.normal)
+
+    newRay := Ray{newRayOrigin, newRayDirection}
+    sampledColor := sampleScene(newRay, numLevels-1)
+    modulatedColor := vector.Mul(diffuseMaterial.diffuseColor, sampledColor)
+    color = vector.Add(diffuseMaterial.emissiveColor, modulatedColor)
+    // color = diffuseMaterial.Shade(ray, closestIntersection)
+  } else {
+    // Return black (for now)
+  }
+
+  return color
 }
 
 func colorToColor8(color vector.Vector3) (r, g, b uint8) {
@@ -127,27 +163,6 @@ func colorToUint8(x float32) uint8 {
   } else {
     return uint8(x)
   }
-}
-
-// Generate a random direction on a hemisphere oriented around the input normal.
-// The random directions have a cosine-weighted distribution.
-// See formula 35 in http://people.cs.kuleuven.be/~philip.dutre/GI/TotalCompendium.pdf
-func generateHemisphereDirection(normal vector.Vector3) vector.Vector3 {
-  r1 := 2 * math.Pi * rand.Float64()
-  r2 := rand.Float64()
-  r2s := math.Sqrt(1-r2)
-
-  // Compute a direction in the unit hemisphere
-  x := float32(math.Cos(r1) * r2s)
-  y := float32(math.Sin(r1) * r2s)
-  z := float32(math.Sqrt(r2))
-
-  // Compute a coordinate frame around the normal and then linearly combine
-  // the basis vectors using the direction components as weights to transform
-  // from unit hemisphere coordinate system to the normal's coordinate system.
-  u, v, w := coordinateFrame(normal)
-  t := vector.Add(vector.Scale(u, x), vector.Scale(v, y))
-  return vector.Add(t, vector.Scale(w, z))
 }
 
 // Given an input vector n this function generates a coordinate frame with the

@@ -35,6 +35,10 @@ func Sub(a, b Vector3) Vector3 {
   return Vector3{a.X-b.X, a.Y-b.Y, a.Z-b.Z}
 }
 
+func Mul(a, b Vector3) Vector3 {
+  return Vector3{a.X * b.X, a.Y * b.Y, a.Z * b.Z}
+}
+
 func Scale(v Vector3, x float32) Vector3 {
   return Vector3{v.X * x, v.Y * x, v.Z * x}
 }
