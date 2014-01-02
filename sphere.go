@@ -26,7 +26,7 @@ func (sphere Sphere) Intersect(ray Ray) Intersection {
   }
 
   discrim := float32(math.Sqrt(discrim_sq))
-  t := float32(0)
+  var t float32
   if (math.Abs(discrim_sq) > 1e-2) {
     t = (-b - discrim) / (2 * a)
   } else {

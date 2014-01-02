@@ -61,8 +61,8 @@ func main() {
     for j := 0; j < ImageWidth; j++ {
       // Compute the 2D position of this pixel on the view plane. The view plane
       // is centered around the view vector and extends [-1,1] in both axis.
-      npx := float32(j - ImageWidth/2) / float32(ImageWidth/2)
-      npy := float32(ImageHeight/2 - i) / float32(ImageHeight/2)
+      npx := float32(j - ImageWidth/2) / (float32(ImageWidth)/2)
+      npy := float32(ImageHeight/2 - i) / (float32(ImageHeight)/2)
 
       // Scale the world-space basis vectors of the view plane to generate
       // offset vectors from the center point of the view plane.
@@ -82,10 +82,11 @@ func main() {
       // Sample the scene using the ray.
       ray := Ray{EyePosition, rayDirection}
       var pixelColor vector.Vector3
-      for s := 0 ; s < 20 ; s++ {
+      numSamples := 20
+      for s := 0 ; s < numSamples ; s++ {
         pixelColor = vector.Add(pixelColor, sampleScene(ray, 10))
       }
-
+      pixelColor = vector.Scale(pixelColor, float32(1.0/numSamples))
       r, g, b := colorToColor8(pixelColor)
 
       index := i * m.Stride + j * 4
@@ -108,7 +109,7 @@ func sampleScene(ray Ray, numLevels int32) vector.Vector3 {
   var closestObject SceneObject = nil
   for _, object := range Scene {
     intersection := object.Intersect(ray)
-    if intersection.doesIntersect {
+    if intersection.doesIntersect && intersection.distance > 0 {
       if intersection.distance < closestIntersection.distance {
         closestIntersection = intersection
         closestObject = object
@@ -124,6 +125,7 @@ func sampleScene(ray Ray, numLevels int32) vector.Vector3 {
     // Compute new sampling direction
     newRayOrigin := vector.Add(ray.origin, vector.Scale(ray.direction, closestIntersection.distance))
     newRayDirection := GenerateHemisphereDirection(closestIntersection.normal)
+    newRayOrigin = vector.Add(newRayOrigin, vector.Scale(newRayDirection, 1e-2))
 
     newRay := Ray{newRayOrigin, newRayDirection}
     sampledColor := sampleScene(newRay, numLevels-1)
